@@ -1,16 +1,15 @@
 #include "loginwindow.h"
+
 #include "mainwindow.h"
 
 LoginWindow::LoginWindow(QWidget *parent) : QWidget(parent) {
-    // Create title label with a larger font
     QLabel *titleLabel = new QLabel("Log In", this);
     QFont titleFont = titleLabel->font();
-    titleFont.setPointSize(15); // Set the font size as desired
-    titleFont.setBold(true); // Make the font bold
+    titleFont.setPointSize(15);
+    titleFont.setBold(true);
     titleLabel->setFont(titleFont);
-    titleLabel->setAlignment(Qt::AlignCenter); // Center align the text
+    titleLabel->setAlignment(Qt::AlignCenter);
 
-    // Initialize login widgets
     QLabel *usernameLabel = new QLabel("Enter username:", this);
     usernameEdit = new QLineEdit(this);
 
@@ -20,9 +19,8 @@ LoginWindow::LoginWindow(QWidget *parent) : QWidget(parent) {
 
     loginButton = new QPushButton("Login", this);
 
-    // Layout the login widgets
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->addWidget(titleLabel); // Add the title label to the layout
+    layout->addWidget(titleLabel);
     layout->addWidget(usernameLabel);
     layout->addWidget(usernameEdit);
     layout->addWidget(passwordLabel);
@@ -31,16 +29,14 @@ LoginWindow::LoginWindow(QWidget *parent) : QWidget(parent) {
 
     setLayout(layout);
 
-    // Connect the login button signal
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::onLoginClicked);
 }
 
 
 
 void LoginWindow::onLoginClicked() {
-    // Here you'd usually verify username and password
     emit loginSuccessful(usernameEdit->text());
-    this->close(); // Close the login window
+    this->close();
 }
 
 QString LoginWindow::getUsername() {
