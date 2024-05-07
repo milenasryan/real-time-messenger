@@ -1,14 +1,15 @@
 #include "mainwindow.h"
+
 #include <QDebug>
+
+#include "encryptor.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), chatServer(new ChatServer(this)), tcpSocket(new QTcpSocket(this))
 {
-    // Create central widget and set as central widget for MainWindow
     QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    // Create the UI elements
     textEditMessages = new QTextEdit(centralWidget);
     textEditMessages->setReadOnly(true);
 
@@ -16,11 +17,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     pushButtonSend = new QPushButton("Send", centralWidget);
 
-    // Connect the button's clicked signal to the appropriate slot
     connect(pushButtonSend, &QPushButton::clicked, this, &MainWindow::onSendMessage);
 
 
-    // Layouts
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(textEditMessages);
 
@@ -31,40 +30,37 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addLayout(inputLayout);
     centralWidget->setLayout(mainLayout);
 
-    // Connect the newMessage signal from chatServer to the slot in MainWindow
     connect(tcpSocket, &QTcpSocket::readyRead, this, &MainWindow::readSocketData);
     connect(chatServer, &ChatServer::newMessage, this, &MainWindow::displayServerMessage);
     connect(tcpSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &MainWindow::displayError);
 
-    // Start the server
-    chatServer->startServer(12345); // Use a port number
+    chatServer->startServer(12345);
 
-    // Attempt to connect to the server as a client
     tcpSocket->connectToHost(QHostAddress::LocalHost, 12345);
 }
 
 void MainWindow::setUsername(const QString &username) {
-    this->username = username; // Set the username
+    this->username = username;
 }
 
 void MainWindow::onSendMessage() {
+    Encryptor encryptor;
     QString message = lineEditMessage->text().trimmed();
     if (!message.isEmpty()) {
         QString fullMessage = username + ": " + message;
-        QByteArray data = fullMessage.toUtf8();
+        QString encryptedMessage = encryptor.encrypt(fullMessage);
 
-        tcpSocket->write(data); // Send message over the socket
-
-        // Append message to the sender's chat history immediately with their username
+        QByteArray data = encryptedMessage.toUtf8();
+        tcpSocket->write(data);
         textEditMessages->append(fullMessage);
-
-        lineEditMessage->clear(); // Clear the input field
+        lineEditMessage->clear();
     }
 }
 
 void MainWindow::displayServerMessage(const QString &message) {
-    // Display all incoming messages
-    textEditMessages->append(message);
+    Encryptor encryptor;
+    QString decryptedMessage = encryptor.decrypt(message);
+    textEditMessages->append(decryptedMessage);
 }
 
 
@@ -76,11 +72,9 @@ void MainWindow::readSocketData()
 
 void MainWindow::displayError(QAbstractSocket::SocketError socketError)
 {
-    Q_UNUSED(socketError); // Use this if you're not directly using the socketError variable
+    Q_UNUSED(socketError);
 
-    // Log the error to the console
     qDebug() << "Socket Error:" << tcpSocket->errorString();
 
-    // If you also want to display the error in the UI, you can do so like this:
     textEditMessages->append("Error: " + tcpSocket->errorString());
 }
